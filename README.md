@@ -1,7 +1,7 @@
 # 🎮 LingoDom
 
 <p align="center">
-  <img src="app/src/main/assets/app_icon.png" alt="LingoDom App Icon" width="200"/>
+  <img src="app/src/main/res/drawable/ld_launch.png" alt="LingoDom App Icon" width="200"/>
 </p>
 
 <p align="center">
@@ -38,7 +38,7 @@ The TV show **Lingo** originated in the United States and gained international p
 3. You may need to enable "Install from Unknown Sources" in your device settings
 4. Launch **LingoDom** and start playing!
 
-**Requirements:** Android 8.0 (Oreo / API 26) or higher
+**Requirements:** Android 7.0 (Nougat / API 24) or higher
 
 ---
 
@@ -146,7 +146,7 @@ Want to modify the game, add features, or learn Android development? Here's how 
 
 - **Android Studio** (latest stable version recommended)
 - **JDK 17** or higher
-- An Android device or emulator running **API 26+** (Android 8.0+)
+- An Android device or emulator running **API 24+** (Android 7.0+)
 
 ### Setup Instructions
 
@@ -177,7 +177,7 @@ Want to modify the game, add features, or learn Android development? Here's how 
 LingoDom/
 ├── app/src/main/java/com/lingodom/app/
 │   ├── core/              # Game logic & engine
-│   │   ├── engine/        # Word validation, scoring
+│   │   ├── engine/        # Word evaluation, scoring
 │   │   └── model/         # Data models (GameRound, PlayerStats, etc.)
 │   ├── data/              # Data layer (preferences, word repository, sound)
 │   ├── ui/                # Jetpack Compose UI components
@@ -186,14 +186,16 @@ LingoDom/
 │   │   ├── navigation/    # Navigation graph
 │   │   └── theme/         # Material 3 theming
 │   └── viewmodel/         # ViewModels for each screen
-├── app/src/main/res/
-│   └── raw/               # Word dictionaries (4-7 letter words)
+├── app/src/main/assets/   # Word dictionaries (4-7 letter words)
+├── app/src/main/res/      # Android resources (icons, themes, strings)
+├── scripts/               # Utility scripts (word list generation)
+├── release/               # Downloadable APK
 └── build.gradle.kts       # Build configuration
 ```
 
 ### Customization Ideas
 
-- **Add new word lengths:** Extend the dictionary files in `res/raw/`
+- **Add new word lengths:** Extend the dictionary files in `assets/`
 - **Create new themes:** Modify `ui/theme/Color.kt` and `Theme.kt`
 - **Adjust difficulty:** Change timer duration, max attempts in `GameRound.kt`
 - **Add power-ups:** Implement hints, letter reveals, or time extensions
@@ -255,8 +257,8 @@ Android Studio will automatically generate icons for all screen densities.
 - **Language:** Kotlin 100%
 - **UI Framework:** Jetpack Compose (Material Design 3)
 - **Architecture:** MVVM with StateFlow
-- **Minimum SDK:** API 26 (Android 8.0 Oreo)
-- **Target SDK:** API 34 (Android 14)
+- **Minimum SDK:** API 24 (Android 7.0 Nougat)
+- **Target SDK:** API 35 (Android 15)
 - **Build System:** Gradle 9.2.1 with Kotlin DSL
 - **Storage:** DataStore (Preferences)
 - **Dependencies:** 

@@ -1,5 +1,6 @@
 *.iml
 .gradle
+.kotlin
 /local.properties
 /.idea
 .DS_Store
@@ -7,9 +8,7 @@
 /captures
 .externalNativeBuild
 .cxx
-local.properties
 /app/build
-/app/release
 *.aab
 *.jks
 *.keystore
