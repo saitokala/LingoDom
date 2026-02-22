@@ -222,7 +222,7 @@ Or via Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**
 
 If you just want to test the game without setting up Android Studio:
 
-1. **Download** the [APK file](app/build/outputs/apk/debug/app-debug.apk) directly
+1. **Download** the [APK file](release/LingoDom.apk) directly
 2. **Transfer** to your Android device (via USB, email, cloud storage, etc.)
 3. **Open** the file using a file manager app
 4. **Allow installation** from unknown sources when prompted:
