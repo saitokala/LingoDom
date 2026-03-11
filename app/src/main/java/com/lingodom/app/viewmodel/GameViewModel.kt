@@ -9,9 +9,9 @@ import com.lingodom.app.core.engine.GameEngine
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.core.model.LetterResult
 import com.lingodom.app.core.model.LetterState
-import com.lingodom.app.data.PreferencesManagerInterface
-import com.lingodom.app.data.SoundManagerInterface
-import com.lingodom.app.data.WordRepositoryInterface
+import com.lingodom.app.data.PreferencesManager
+import com.lingodom.app.data.SoundManager
+import com.lingodom.app.data.WordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -53,9 +53,9 @@ data class GameUiState(
 
 @HiltViewModel
 class GameViewModel @Inject constructor(
-    private val wordRepo: WordRepositoryInterface,
-    private val prefs: PreferencesManagerInterface,
-    private val soundManager: SoundManagerInterface
+    private val wordRepo: WordRepository,
+    private val prefs: PreferencesManager,
+    private val soundManager: SoundManager
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(GameUiState())
@@ -192,6 +192,7 @@ class GameViewModel @Inject constructor(
         val stats = prefs.statsFlow.first()
         val unlocked = detectNewUnlock(stats.totalScore, stats.totalScore - earned)
 
+        // Play victory jingle
         playSound(AudioManager.FX_KEYPRESS_RETURN)
 
         _ui.update {
@@ -218,6 +219,7 @@ class GameViewModel @Inject constructor(
         prefs.recordLoss()
         val stats = prefs.statsFlow.first()
 
+        // Play failure tone
         playSound(AudioManager.FX_KEYPRESS_DELETE)
 
         _ui.update {

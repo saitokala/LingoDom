@@ -4,11 +4,9 @@ import app.cash.turbine.test
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.core.model.PlayerStats
 import com.lingodom.app.core.model.Rank
-import com.lingodom.app.data.PreferencesManagerInterface
+import com.lingodom.app.fake.FakePreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -23,22 +21,12 @@ import org.junit.Test
 class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-
-    private val fakeStatsFlow = MutableStateFlow(PlayerStats())
-
-    private val fakePrefs = object : PreferencesManagerInterface {
-        override val statsFlow: Flow<PlayerStats> = fakeStatsFlow
-        override val timerDurationFlow: Flow<Int> = MutableStateFlow(60)
-        override val soundEnabledFlow: Flow<Boolean> = MutableStateFlow(true)
-        override suspend fun recordWin(score: Int, guessNumber: Int, roundNumber: Int) {}
-        override suspend fun recordLoss() {}
-        override suspend fun setTimerDuration(seconds: Int) {}
-        override suspend fun setSoundEnabled(enabled: Boolean) {}
-    }
+    private lateinit var fakePrefs: FakePreferencesManager
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        fakePrefs = FakePreferencesManager()
     }
 
     @After
@@ -65,7 +53,7 @@ class HomeViewModelTest {
         vm.uiState.test {
             awaitItem() // initial
 
-            fakeStatsFlow.value = PlayerStats(totalScore = 2500)
+            fakePrefs.statsState.value = PlayerStats(totalScore = 2500)
             val state = awaitItem()
             assertEquals(Rank.LINGUIST, state.rank)
             assertTrue(state.unlockedRounds.contains(GameRound.CLASSIC))
@@ -81,7 +69,7 @@ class HomeViewModelTest {
         vm.uiState.test {
             awaitItem()
 
-            fakeStatsFlow.value = PlayerStats(totalScore = 250)
+            fakePrefs.statsState.value = PlayerStats(totalScore = 250)
             val state = awaitItem()
             // Next unlock is CLASSIC at 500, progress = 250/500 = 0.5
             assertEquals(0.5f, state.nextUnlockProgress, 0.01f)

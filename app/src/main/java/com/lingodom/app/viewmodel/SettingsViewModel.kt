@@ -2,7 +2,7 @@ package com.lingodom.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lingodom.app.data.PreferencesManagerInterface
+import com.lingodom.app.data.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +18,7 @@ data class SettingsUiState(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val prefs: PreferencesManagerInterface
+    private val prefs: PreferencesManager
 ) : ViewModel() {
 
     val uiState: StateFlow<SettingsUiState> = combine(

@@ -1,12 +1,9 @@
 package com.lingodom.app.viewmodel
 
 import app.cash.turbine.test
-import com.lingodom.app.core.model.PlayerStats
-import com.lingodom.app.data.PreferencesManagerInterface
+import com.lingodom.app.fake.FakePreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -20,25 +17,12 @@ import org.junit.Test
 class SettingsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val timerFlow = MutableStateFlow(60)
-    private val soundFlow = MutableStateFlow(true)
-
-    private var lastTimerSet: Int? = null
-    private var lastSoundSet: Boolean? = null
-
-    private val fakePrefs = object : PreferencesManagerInterface {
-        override val statsFlow: Flow<PlayerStats> = MutableStateFlow(PlayerStats())
-        override val timerDurationFlow: Flow<Int> = timerFlow
-        override val soundEnabledFlow: Flow<Boolean> = soundFlow
-        override suspend fun recordWin(score: Int, guessNumber: Int, roundNumber: Int) {}
-        override suspend fun recordLoss() {}
-        override suspend fun setTimerDuration(seconds: Int) { lastTimerSet = seconds }
-        override suspend fun setSoundEnabled(enabled: Boolean) { lastSoundSet = enabled }
-    }
+    private lateinit var fakePrefs: FakePreferencesManager
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        fakePrefs = FakePreferencesManager()
     }
 
     @After
@@ -63,7 +47,7 @@ class SettingsViewModelTest {
         val vm = SettingsViewModel(fakePrefs)
         vm.setTimerDuration(30)
         testDispatcher.scheduler.advanceUntilIdle()
-        assertEquals(30, lastTimerSet)
+        assertEquals(30, fakePrefs.lastTimerSet)
     }
 
     @Test
@@ -71,6 +55,6 @@ class SettingsViewModelTest {
         val vm = SettingsViewModel(fakePrefs)
         vm.setSoundEnabled(false)
         testDispatcher.scheduler.advanceUntilIdle()
-        assertEquals(false, lastSoundSet)
+        assertEquals(false, fakePrefs.lastSoundSet)
     }
 }

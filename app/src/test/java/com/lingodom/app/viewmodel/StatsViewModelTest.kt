@@ -3,11 +3,9 @@ package com.lingodom.app.viewmodel
 import app.cash.turbine.test
 import com.lingodom.app.core.model.PlayerStats
 import com.lingodom.app.core.model.Rank
-import com.lingodom.app.data.PreferencesManagerInterface
+import com.lingodom.app.fake.FakePreferencesManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -21,21 +19,12 @@ import org.junit.Test
 class StatsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val fakeStatsFlow = MutableStateFlow(PlayerStats())
-
-    private val fakePrefs = object : PreferencesManagerInterface {
-        override val statsFlow: Flow<PlayerStats> = fakeStatsFlow
-        override val timerDurationFlow: Flow<Int> = MutableStateFlow(60)
-        override val soundEnabledFlow: Flow<Boolean> = MutableStateFlow(true)
-        override suspend fun recordWin(score: Int, guessNumber: Int, roundNumber: Int) {}
-        override suspend fun recordLoss() {}
-        override suspend fun setTimerDuration(seconds: Int) {}
-        override suspend fun setSoundEnabled(enabled: Boolean) {}
-    }
+    private lateinit var fakePrefs: FakePreferencesManager
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        fakePrefs = FakePreferencesManager()
     }
 
     @After
@@ -63,7 +52,7 @@ class StatsViewModelTest {
         vm.uiState.test {
             awaitItem()
 
-            fakeStatsFlow.value = PlayerStats(
+            fakePrefs.statsState.value = PlayerStats(
                 totalWordsPlayed = 10,
                 totalWordsWon = 7
             )
@@ -81,7 +70,7 @@ class StatsViewModelTest {
             awaitItem()
 
             // 2 wins on guess 1, 3 wins on guess 3 = (2*1 + 3*3) / 5 = 11/5 = 2.2
-            fakeStatsFlow.value = PlayerStats(
+            fakePrefs.statsState.value = PlayerStats(
                 totalWordsWon = 5,
                 guessDistribution = listOf(2, 0, 3, 0, 0, 0)
             )
@@ -98,7 +87,7 @@ class StatsViewModelTest {
         vm.uiState.test {
             awaitItem()
 
-            fakeStatsFlow.value = PlayerStats(totalScore = 5000)
+            fakePrefs.statsState.value = PlayerStats(totalScore = 5000)
             val state = awaitItem()
             assertEquals(Rank.LEXICON_MASTER, state.rank)
             cancelAndIgnoreRemainingEvents()

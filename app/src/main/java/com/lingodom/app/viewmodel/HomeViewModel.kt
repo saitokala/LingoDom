@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.core.model.PlayerStats
 import com.lingodom.app.core.model.Rank
-import com.lingodom.app.data.PreferencesManagerInterface
+import com.lingodom.app.data.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +23,7 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    prefs: PreferencesManagerInterface
+    prefs: PreferencesManager
 ) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = prefs.statsFlow

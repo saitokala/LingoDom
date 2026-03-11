@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Route hardware volume buttons to media stream for sound effects
         volumeControlStream = AudioManager.STREAM_MUSIC
 
         setContent {
