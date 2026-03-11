@@ -46,6 +46,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":core"))
+    implementation(project(":data"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -57,7 +60,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.core.splashscreen)
 
     // Hilt
