@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.ui.theme.CorrectGreen
 import com.lingodom.app.ui.theme.WrongPositionYellow
@@ -42,7 +42,7 @@ import com.lingodom.app.viewmodel.StatsViewModel
 @Composable
 fun StatsScreen(
     onNavigateBack: () -> Unit,
-    viewModel: StatsViewModel = viewModel()
+    viewModel: StatsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
 

@@ -14,15 +14,15 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.lingodom.app.ui.navigation.NavGraph
 import com.lingodom.app.ui.theme.LingoDomTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Set volume control stream so hardware buttons control media volume
-        // This ensures sound effects are audible
         volumeControlStream = AudioManager.STREAM_MUSIC
 
         setContent {

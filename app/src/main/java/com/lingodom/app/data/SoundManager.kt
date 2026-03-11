@@ -4,6 +4,9 @@ import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Plays sound effects for game events.
@@ -12,22 +15,16 @@ import android.util.Log
  * - Win / loss effects use a ToneGenerator sequence on a background thread
  *   to produce a musical jingle without shipping audio files.
  */
-class SoundManager(@Suppress("UNUSED_PARAMETER") context: Context) {
+@Singleton
+class SoundManager @Inject constructor(
+    @ApplicationContext @Suppress("UNUSED_PARAMETER") context: Context
+) : SoundManagerInterface {
 
     companion object {
         private const val TAG = "SoundManager"
     }
 
-    /**
-     * Plays a sound based on the [effectType] constant from [AudioManager].
-     *
-     * | effectType               | Sound produced                          |
-     * |--------------------------|-----------------------------------------|
-     * | FX_KEY_CLICK             | Short tap tone                          |
-     * | FX_KEYPRESS_RETURN       | Rising 3-note victory jingle 🎵         |
-     * | FX_KEYPRESS_DELETE       | Descending 2-note failure tone          |
-     */
-    fun playSound(effectType: Int) {
+    override fun playSound(effectType: Int) {
         when (effectType) {
             AudioManager.FX_KEYPRESS_RETURN -> playVictoryJingle()
             AudioManager.FX_KEYPRESS_DELETE -> playFailureTone()
@@ -61,13 +58,10 @@ class SoundManager(@Suppress("UNUSED_PARAMETER") context: Context) {
             var gen: ToneGenerator? = null
             try {
                 gen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
-                // Note 1 — C  (DTMF tone '1' ≈ 697+1209 Hz, bright)
                 gen.startTone(ToneGenerator.TONE_DTMF_1, 140)
                 Thread.sleep(180)
-                // Note 2 — E  (DTMF tone '4' ≈ 770+1209 Hz, mid)
                 gen.startTone(ToneGenerator.TONE_DTMF_4, 140)
                 Thread.sleep(180)
-                // Note 3 — G  (DTMF tone '7' ≈ 852+1209 Hz, high, longer)
                 gen.startTone(ToneGenerator.TONE_DTMF_7, 250)
                 Thread.sleep(350)
             } catch (e: Exception) {
@@ -85,10 +79,8 @@ class SoundManager(@Suppress("UNUSED_PARAMETER") context: Context) {
             var gen: ToneGenerator? = null
             try {
                 gen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
-                // High note
                 gen.startTone(ToneGenerator.TONE_DTMF_9, 180)
                 Thread.sleep(220)
-                // Low note
                 gen.startTone(ToneGenerator.TONE_DTMF_1, 300)
                 Thread.sleep(400)
             } catch (e: Exception) {
@@ -98,5 +90,4 @@ class SoundManager(@Suppress("UNUSED_PARAMETER") context: Context) {
             }
         }.start()
     }
-
 }

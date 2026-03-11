@@ -1,17 +1,18 @@
 package com.lingodom.app.viewmodel
 
-import android.app.Application
 import android.media.AudioManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lingodom.app.LingoDomApp
 import com.lingodom.app.core.engine.GameEngine
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.core.model.LetterResult
 import com.lingodom.app.core.model.LetterState
-import com.lingodom.app.data.SoundManager
+import com.lingodom.app.data.PreferencesManagerInterface
+import com.lingodom.app.data.SoundManagerInterface
+import com.lingodom.app.data.WordRepositoryInterface
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 // ── UI State ────────────────────────────────────────────────────────
 
@@ -49,12 +51,12 @@ data class GameUiState(
 
 // ── ViewModel ───────────────────────────────────────────────────────
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val app = application as LingoDomApp
-    private val wordRepo = app.wordRepository
-    private val prefs = app.preferencesManager
-    private val soundManager: SoundManager
+@HiltViewModel
+class GameViewModel @Inject constructor(
+    private val wordRepo: WordRepositoryInterface,
+    private val prefs: PreferencesManagerInterface,
+    private val soundManager: SoundManagerInterface
+) : ViewModel() {
 
     private val _ui = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _ui.asStateFlow()
@@ -63,7 +65,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var timerJob: Job? = null
 
     init {
-        soundManager = app.soundManager
         viewModelScope.launch {
             val stats = prefs.statsFlow.first()
             val timer = prefs.timerDurationFlow.first()
@@ -191,7 +192,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val stats = prefs.statsFlow.first()
         val unlocked = detectNewUnlock(stats.totalScore, stats.totalScore - earned)
 
-        // Play win sound effect
         playSound(AudioManager.FX_KEYPRESS_RETURN)
 
         _ui.update {
@@ -218,7 +218,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         prefs.recordLoss()
         val stats = prefs.statsFlow.first()
 
-        // Play loss sound effect
         playSound(AudioManager.FX_KEYPRESS_DELETE)
 
         _ui.update {

@@ -45,7 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.ui.components.ConfettiEffect
 import com.lingodom.app.ui.components.LetterGrid
@@ -60,7 +60,7 @@ fun GameScreen(
     round: GameRound,
     onNavigateBack: () -> Unit,
     onPlayAgain: (GameRound) -> Unit,
-    viewModel: GameViewModel = viewModel()
+    viewModel: GameViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
     val focusRequester = remember { FocusRequester() }

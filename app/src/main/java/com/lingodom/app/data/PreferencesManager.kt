@@ -8,8 +8,11 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.lingodom.app.core.model.PlayerStats
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "lingodom_prefs")
 
@@ -17,7 +20,10 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
  * Manages all persisted preferences: player stats, settings, theme.
  * Uses Jetpack DataStore (Preferences) — no account or network required.
  */
-class PreferencesManager(private val context: Context) {
+@Singleton
+class PreferencesManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) : PreferencesManagerInterface {
 
     // ── Keys ────────────────────────────────────────────────────────────
     private companion object {
@@ -52,7 +58,7 @@ class PreferencesManager(private val context: Context) {
 
     // ── Flows ───────────────────────────────────────────────────────────
 
-    val statsFlow: Flow<PlayerStats> = context.dataStore.data.map { p ->
+    override val statsFlow: Flow<PlayerStats> = context.dataStore.data.map { p ->
         PlayerStats(
             totalScore = p[TOTAL_SCORE] ?: 0,
             currentStreak = p[CURRENT_STREAK] ?: 0,
@@ -72,12 +78,12 @@ class PreferencesManager(private val context: Context) {
         )
     }
 
-    val timerDurationFlow: Flow<Int> = context.dataStore.data.map { it[TIMER_DURATION] ?: 60 }
-    val soundEnabledFlow: Flow<Boolean> = context.dataStore.data.map { it[SOUND_ENABLED] ?: true }
+    override val timerDurationFlow: Flow<Int> = context.dataStore.data.map { it[TIMER_DURATION] ?: 60 }
+    override val soundEnabledFlow: Flow<Boolean> = context.dataStore.data.map { it[SOUND_ENABLED] ?: true }
 
     // ── Mutations ───────────────────────────────────────────────────────
 
-    suspend fun recordWin(score: Int, guessNumber: Int, roundNumber: Int) {
+    override suspend fun recordWin(score: Int, guessNumber: Int, roundNumber: Int) {
         context.dataStore.edit { p ->
             val newStreak = (p[CURRENT_STREAK] ?: 0) + 1
             p[TOTAL_SCORE] = (p[TOTAL_SCORE] ?: 0) + score
@@ -92,18 +98,18 @@ class PreferencesManager(private val context: Context) {
         }
     }
 
-    suspend fun recordLoss() {
+    override suspend fun recordLoss() {
         context.dataStore.edit { p ->
             p[CURRENT_STREAK] = 0
             p[TOTAL_WORDS_PLAYED] = (p[TOTAL_WORDS_PLAYED] ?: 0) + 1
         }
     }
 
-    suspend fun setTimerDuration(seconds: Int) {
+    override suspend fun setTimerDuration(seconds: Int) {
         context.dataStore.edit { it[TIMER_DURATION] = seconds }
     }
 
-    suspend fun setSoundEnabled(enabled: Boolean) {
+    override suspend fun setSoundEnabled(enabled: Boolean) {
         context.dataStore.edit { it[SOUND_ENABLED] = enabled }
     }
 }
