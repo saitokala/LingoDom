@@ -1,17 +1,18 @@
 package com.lingodom.app.viewmodel
 
-import android.app.Application
 import android.media.AudioManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lingodom.app.LingoDomApp
 import com.lingodom.app.core.engine.GameEngine
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.core.model.LetterResult
 import com.lingodom.app.core.model.LetterState
+import com.lingodom.app.data.PreferencesManager
 import com.lingodom.app.data.SoundManager
+import com.lingodom.app.data.WordRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 // ── UI State ────────────────────────────────────────────────────────
 
@@ -49,21 +51,21 @@ data class GameUiState(
 
 // ── ViewModel ───────────────────────────────────────────────────────
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val app = application as LingoDomApp
-    private val wordRepo = app.wordRepository
-    private val prefs = app.preferencesManager
+@HiltViewModel
+class GameViewModel @Inject constructor(
+    private val wordRepo: WordRepository,
+    private val prefs: PreferencesManager,
     private val soundManager: SoundManager
+) : ViewModel() {
 
     private val _ui = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _ui.asStateFlow()
 
     private var targetWord = ""
     private var timerJob: Job? = null
+    private var submitting = false
 
     init {
-        soundManager = app.soundManager
         viewModelScope.launch {
             val stats = prefs.statsFlow.first()
             val timer = prefs.timerDurationFlow.first()
@@ -140,41 +142,47 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun submitGuess() {
+        if (submitting) return
+        submitting = true
         viewModelScope.launch {
-            val s = _ui.value
-            if (s.gameStatus != GameStatus.PLAYING) return@launch
+            try {
+                val s = _ui.value
+                if (s.gameStatus != GameStatus.PLAYING) return@launch
 
-            val guess = s.currentInput.text.uppercase()
+                val guess = s.currentInput.text.uppercase()
 
-            if (guess.length != s.wordLength) {
-                return@launch
-            }
-            if (!wordRepo.isValidWord(guess)) {
-                _ui.update { it.copy(message = "Not a valid word") }
-                delay(1000L)
-                _ui.update {
-                    it.copy(
-                        message = null,
-                        currentInput = TextFieldValue(
-                            text = s.firstLetter.toString(),
-                            selection = TextRange(1)
-                        )
-                    )
+                if (guess.length != s.wordLength) {
+                    return@launch
                 }
-                return@launch
-            }
+                if (!wordRepo.isValidWord(guess)) {
+                    _ui.update { it.copy(message = "Not a valid word") }
+                    delay(1000L)
+                    _ui.update {
+                        it.copy(
+                            message = null,
+                            currentInput = TextFieldValue(
+                                text = s.firstLetter.toString(),
+                                selection = TextRange(1)
+                            )
+                        )
+                    }
+                    return@launch
+                }
 
-            val result = GameEngine.evaluateGuess(guess, targetWord)
-            val newGuesses = s.guesses + listOf(result)
-            val newKeys = mergeKeyStates(s.keyStates, result)
-            val guessNum = newGuesses.size
+                val result = GameEngine.evaluateGuess(guess, targetWord)
+                val newGuesses = s.guesses + listOf(result)
+                val newKeys = mergeKeyStates(s.keyStates, result)
+                val guessNum = newGuesses.size
 
-            if (result.all { it.state == LetterState.CORRECT }) {
-                handleWin(newGuesses, newKeys, guessNum)
-            } else if (guessNum >= s.maxAttempts) {
-                handleLoss(newGuesses, newKeys)
-            } else {
-                handleCorrectGuess(newGuesses, newKeys)
+                if (result.all { it.state == LetterState.CORRECT }) {
+                    handleWin(newGuesses, newKeys, guessNum)
+                } else if (guessNum >= s.maxAttempts) {
+                    handleLoss(newGuesses, newKeys)
+                } else {
+                    handleIncorrectGuess(newGuesses, newKeys)
+                }
+            } finally {
+                submitting = false
             }
         }
     }
@@ -191,7 +199,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val stats = prefs.statsFlow.first()
         val unlocked = detectNewUnlock(stats.totalScore, stats.totalScore - earned)
 
-        // Play win sound effect
+        // Play victory jingle
         playSound(AudioManager.FX_KEYPRESS_RETURN)
 
         _ui.update {
@@ -218,7 +226,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         prefs.recordLoss()
         val stats = prefs.statsFlow.first()
 
-        // Play loss sound effect
+        // Play failure tone
         playSound(AudioManager.FX_KEYPRESS_DELETE)
 
         _ui.update {
@@ -236,7 +244,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun handleCorrectGuess(newGuesses: List<List<LetterResult>>, newKeys: Map<Char, LetterState>) {
+    private fun handleIncorrectGuess(newGuesses: List<List<LetterResult>>, newKeys: Map<Char, LetterState>) {
         resetTimer()
         _ui.update {
             it.copy(
@@ -278,11 +286,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun handleTimerExpiry() {
         val s = _ui.value
-        if (s.guesses.size + 1 >= s.maxAttempts) {
-            viewModelScope.launch { handleLoss(s.guesses, s.keyStates) }
+        // Count timer expiry as a consumed attempt by adding an empty guess row
+        val emptyGuess = List(s.wordLength) { LetterResult(' ', LetterState.ABSENT) }
+        val newGuesses = s.guesses + listOf(emptyGuess)
+
+        if (newGuesses.size >= s.maxAttempts) {
+            viewModelScope.launch { handleLoss(newGuesses, s.keyStates) }
         } else {
             _ui.update {
                 it.copy(
+                    guesses = newGuesses,
                     timerSeconds = it.timerTotal,
                     currentInput = TextFieldValue(
                         text = targetWord.first().toString(),

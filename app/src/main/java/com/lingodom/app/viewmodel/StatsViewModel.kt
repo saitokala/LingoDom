@@ -1,15 +1,16 @@
 package com.lingodom.app.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lingodom.app.LingoDomApp
 import com.lingodom.app.core.model.PlayerStats
 import com.lingodom.app.core.model.Rank
+import com.lingodom.app.data.PreferencesManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import javax.inject.Inject
 
 data class StatsUiState(
     val stats: PlayerStats = PlayerStats(),
@@ -18,9 +19,10 @@ data class StatsUiState(
     val averageGuesses: Float = 0f
 )
 
-class StatsViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val prefs = (application as LingoDomApp).preferencesManager
+@HiltViewModel
+class StatsViewModel @Inject constructor(
+    prefs: PreferencesManager
+) : ViewModel() {
 
     val uiState: StateFlow<StatsUiState> = prefs.statsFlow
         .map { s ->

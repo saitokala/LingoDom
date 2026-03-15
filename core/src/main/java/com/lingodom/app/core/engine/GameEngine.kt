@@ -20,6 +20,9 @@ object GameEngine {
      * @return A list of [LetterResult] — one per character in [guess].
      */
     fun evaluateGuess(guess: String, target: String): List<LetterResult> {
+        require(guess.length == target.length) {
+            "Guess length (${guess.length}) must match target length (${target.length})"
+        }
         val g = guess.uppercase().toCharArray()
         val t = target.uppercase().toCharArray()
         val results = Array(g.size) { LetterResult(g[it], LetterState.ABSENT) }
@@ -27,7 +30,7 @@ object GameEngine {
 
         // Pass 1 — exact matches
         for (i in g.indices) {
-            if (i < t.size && g[i] == t[i]) {
+            if (g[i] == t[i]) {
                 results[i] = LetterResult(g[i], LetterState.CORRECT)
                 used[i] = true
             }

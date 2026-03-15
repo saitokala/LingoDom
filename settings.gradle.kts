@@ -22,3 +22,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "LingoDom"
 include(":app")
+include(":core")
+include(":data")

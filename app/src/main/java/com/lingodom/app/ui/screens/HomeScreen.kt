@@ -40,7 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.ui.theme.CorrectGreen
 import com.lingodom.app.ui.theme.LingoAccent
@@ -52,7 +52,7 @@ fun HomeScreen(
     onPlayRound: (GameRound) -> Unit,
     onNavigateToStats: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -119,10 +119,10 @@ fun HomeScreen(
         )
 
         // ── Progress to next unlock ─────────────────────────────
-        if (state.nextUnlockRound != null) {
+        state.nextUnlockRound?.let { nextRound ->
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "Next unlock: ${state.nextUnlockRound!!.displayName} (${state.nextUnlockRound!!.unlockScore} pts)",
+                text = "Next unlock: ${nextRound.displayName} (${nextRound.unlockScore} pts)",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

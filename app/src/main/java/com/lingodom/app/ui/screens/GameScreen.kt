@@ -45,7 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.ui.components.ConfettiEffect
 import com.lingodom.app.ui.components.LetterGrid
@@ -60,7 +60,7 @@ fun GameScreen(
     round: GameRound,
     onNavigateBack: () -> Unit,
     onPlayAgain: (GameRound) -> Unit,
-    viewModel: GameViewModel = viewModel()
+    viewModel: GameViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
     val focusRequester = remember { FocusRequester() }
@@ -79,14 +79,15 @@ fun GameScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .imePadding() // Automatically handle keyboard padding
-            .padding(top = 16.dp, bottom = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .imePadding() // Automatically handle keyboard padding
+                .padding(top = 16.dp, bottom = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
         // ── Top bar ─────────────────────────────────────────
         Row(
             modifier = Modifier
@@ -251,7 +252,9 @@ fun GameScreen(
             Spacer(Modifier.height(8.dp))
         }
 
-        // ── Confetti overlay ────────────────────────────────────
+        }
+
+        // ── Confetti overlay (in Box, above Column for proper z-ordering) ──
         ConfettiEffect(
             trigger = state.showConfetti,
             onComplete = viewModel::dismissConfetti,

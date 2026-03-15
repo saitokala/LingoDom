@@ -1,16 +1,17 @@
 package com.lingodom.app.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lingodom.app.LingoDomApp
 import com.lingodom.app.core.model.GameRound
 import com.lingodom.app.core.model.PlayerStats
 import com.lingodom.app.core.model.Rank
+import com.lingodom.app.data.PreferencesManager
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import javax.inject.Inject
 
 data class HomeUiState(
     val stats: PlayerStats = PlayerStats(),
@@ -20,9 +21,10 @@ data class HomeUiState(
     val nextUnlockProgress: Float = 0f
 )
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val prefs = (application as LingoDomApp).preferencesManager
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    prefs: PreferencesManager
+) : ViewModel() {
 
     val uiState: StateFlow<HomeUiState> = prefs.statsFlow
         .map { stats ->
