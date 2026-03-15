@@ -30,7 +30,7 @@ object GameEngine {
 
         // Pass 1 — exact matches
         for (i in g.indices) {
-            if (i < t.size && g[i] == t[i]) {
+            if (g[i] == t[i]) {
                 results[i] = LetterResult(g[i], LetterState.CORRECT)
                 used[i] = true
             }

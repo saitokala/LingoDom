@@ -80,14 +80,14 @@ fun GameScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .imePadding() // Automatically handle keyboard padding
-            .padding(top = 16.dp, bottom = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .imePadding() // Automatically handle keyboard padding
+                .padding(top = 16.dp, bottom = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
         // ── Top bar ─────────────────────────────────────────
         Row(
             modifier = Modifier
@@ -252,13 +252,13 @@ fun GameScreen(
             Spacer(Modifier.height(8.dp))
         }
 
-    }
+        }
 
-    // ── Confetti overlay (in Box, above Column for proper z-ordering) ──
-    ConfettiEffect(
-        trigger = state.showConfetti,
-        onComplete = viewModel::dismissConfetti,
-        modifier = Modifier.fillMaxSize()
-    )
+        // ── Confetti overlay (in Box, above Column for proper z-ordering) ──
+        ConfettiEffect(
+            trigger = state.showConfetti,
+            onComplete = viewModel::dismissConfetti,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
