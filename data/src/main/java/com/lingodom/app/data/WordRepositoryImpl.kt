@@ -3,6 +3,7 @@ package com.lingodom.app.data
 import android.content.Context
 import com.lingodom.app.core.model.GameRound
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,7 +16,7 @@ class WordRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : WordRepository {
 
-    private val cache = mutableMapOf<Int, List<String>>()
+    private val cache = ConcurrentHashMap<Int, List<String>>()
 
     override fun getRandomWord(round: GameRound): String {
         val words = loadWords(round.wordLength)
@@ -29,19 +30,23 @@ class WordRepositoryImpl @Inject constructor(
     }
 
     private fun loadWords(length: Int): List<String> {
-        return cache.getOrPut(length) {
-            try {
-                context.assets.open("words_$length.txt")
-                    .bufferedReader()
-                    .readLines()
-                    .asSequence()
-                    .map { it.trim().uppercase() }
-                    .filter { it.length == length && it.all(Char::isLetter) }
-                    .distinct()
-                    .toList()
-            } catch (_: Exception) {
-                emptyList()
-            }
+        cache[length]?.let { return it }
+        val words = try {
+            context.assets.open("words_$length.txt")
+                .bufferedReader()
+                .readLines()
+                .asSequence()
+                .map { it.trim().uppercase() }
+                .filter { it.length == length && it.all(Char::isLetter) }
+                .distinct()
+                .toList()
+        } catch (_: Exception) {
+            emptyList()
         }
+        // Only cache successful loads to allow retry on transient failures
+        if (words.isNotEmpty()) {
+            cache[length] = words
+        }
+        return words
     }
 }

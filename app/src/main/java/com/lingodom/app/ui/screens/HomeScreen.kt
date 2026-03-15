@@ -119,10 +119,10 @@ fun HomeScreen(
         )
 
         // ── Progress to next unlock ─────────────────────────────
-        if (state.nextUnlockRound != null) {
+        state.nextUnlockRound?.let { nextRound ->
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "Next unlock: ${state.nextUnlockRound!!.displayName} (${state.nextUnlockRound!!.unlockScore} pts)",
+                text = "Next unlock: ${nextRound.displayName} (${nextRound.unlockScore} pts)",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

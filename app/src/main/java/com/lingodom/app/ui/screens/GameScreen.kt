@@ -79,6 +79,7 @@ fun GameScreen(
         }
     }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -251,11 +252,13 @@ fun GameScreen(
             Spacer(Modifier.height(8.dp))
         }
 
-        // ── Confetti overlay ────────────────────────────────────
-        ConfettiEffect(
-            trigger = state.showConfetti,
-            onComplete = viewModel::dismissConfetti,
-            modifier = Modifier.fillMaxSize()
-        )
+    }
+
+    // ── Confetti overlay (in Box, above Column for proper z-ordering) ──
+    ConfettiEffect(
+        trigger = state.showConfetti,
+        onComplete = viewModel::dismissConfetti,
+        modifier = Modifier.fillMaxSize()
+    )
     }
 }

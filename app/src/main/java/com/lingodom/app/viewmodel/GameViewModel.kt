@@ -63,6 +63,7 @@ class GameViewModel @Inject constructor(
 
     private var targetWord = ""
     private var timerJob: Job? = null
+    private var submitting = false
 
     init {
         viewModelScope.launch {
@@ -141,41 +142,47 @@ class GameViewModel @Inject constructor(
     }
 
     private fun submitGuess() {
+        if (submitting) return
+        submitting = true
         viewModelScope.launch {
-            val s = _ui.value
-            if (s.gameStatus != GameStatus.PLAYING) return@launch
+            try {
+                val s = _ui.value
+                if (s.gameStatus != GameStatus.PLAYING) return@launch
 
-            val guess = s.currentInput.text.uppercase()
+                val guess = s.currentInput.text.uppercase()
 
-            if (guess.length != s.wordLength) {
-                return@launch
-            }
-            if (!wordRepo.isValidWord(guess)) {
-                _ui.update { it.copy(message = "Not a valid word") }
-                delay(1000L)
-                _ui.update {
-                    it.copy(
-                        message = null,
-                        currentInput = TextFieldValue(
-                            text = s.firstLetter.toString(),
-                            selection = TextRange(1)
-                        )
-                    )
+                if (guess.length != s.wordLength) {
+                    return@launch
                 }
-                return@launch
-            }
+                if (!wordRepo.isValidWord(guess)) {
+                    _ui.update { it.copy(message = "Not a valid word") }
+                    delay(1000L)
+                    _ui.update {
+                        it.copy(
+                            message = null,
+                            currentInput = TextFieldValue(
+                                text = s.firstLetter.toString(),
+                                selection = TextRange(1)
+                            )
+                        )
+                    }
+                    return@launch
+                }
 
-            val result = GameEngine.evaluateGuess(guess, targetWord)
-            val newGuesses = s.guesses + listOf(result)
-            val newKeys = mergeKeyStates(s.keyStates, result)
-            val guessNum = newGuesses.size
+                val result = GameEngine.evaluateGuess(guess, targetWord)
+                val newGuesses = s.guesses + listOf(result)
+                val newKeys = mergeKeyStates(s.keyStates, result)
+                val guessNum = newGuesses.size
 
-            if (result.all { it.state == LetterState.CORRECT }) {
-                handleWin(newGuesses, newKeys, guessNum)
-            } else if (guessNum >= s.maxAttempts) {
-                handleLoss(newGuesses, newKeys)
-            } else {
-                handleCorrectGuess(newGuesses, newKeys)
+                if (result.all { it.state == LetterState.CORRECT }) {
+                    handleWin(newGuesses, newKeys, guessNum)
+                } else if (guessNum >= s.maxAttempts) {
+                    handleLoss(newGuesses, newKeys)
+                } else {
+                    handleIncorrectGuess(newGuesses, newKeys)
+                }
+            } finally {
+                submitting = false
             }
         }
     }
@@ -237,7 +244,7 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    private fun handleCorrectGuess(newGuesses: List<List<LetterResult>>, newKeys: Map<Char, LetterState>) {
+    private fun handleIncorrectGuess(newGuesses: List<List<LetterResult>>, newKeys: Map<Char, LetterState>) {
         resetTimer()
         _ui.update {
             it.copy(
@@ -279,11 +286,16 @@ class GameViewModel @Inject constructor(
 
     private fun handleTimerExpiry() {
         val s = _ui.value
-        if (s.guesses.size + 1 >= s.maxAttempts) {
-            viewModelScope.launch { handleLoss(s.guesses, s.keyStates) }
+        // Count timer expiry as a consumed attempt by adding an empty guess row
+        val emptyGuess = List(s.wordLength) { LetterResult(' ', LetterState.ABSENT) }
+        val newGuesses = s.guesses + listOf(emptyGuess)
+
+        if (newGuesses.size >= s.maxAttempts) {
+            viewModelScope.launch { handleLoss(newGuesses, s.keyStates) }
         } else {
             _ui.update {
                 it.copy(
+                    guesses = newGuesses,
                     timerSeconds = it.timerTotal,
                     currentInput = TextFieldValue(
                         text = targetWord.first().toString(),

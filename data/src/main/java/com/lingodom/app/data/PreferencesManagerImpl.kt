@@ -45,14 +45,20 @@ class PreferencesManagerImpl @Inject constructor(
         val TIMER_DURATION = intPreferencesKey("timer_duration")
         val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
 
-        fun guessKey(n: Int) = when (n) {
-            1 -> GUESS_1; 2 -> GUESS_2; 3 -> GUESS_3
-            4 -> GUESS_4; 5 -> GUESS_5; else -> GUESS_6
+        fun guessKey(n: Int): Preferences.Key<Int> {
+            require(n in 1..6) { "guessNumber must be 1..6, was $n" }
+            return when (n) {
+                1 -> GUESS_1; 2 -> GUESS_2; 3 -> GUESS_3
+                4 -> GUESS_4; 5 -> GUESS_5; else -> GUESS_6
+            }
         }
 
-        fun roundKey(n: Int) = when (n) {
-            1 -> WORDS_WON_R1; 2 -> WORDS_WON_R2
-            3 -> WORDS_WON_R3; else -> WORDS_WON_R4
+        fun roundKey(n: Int): Preferences.Key<Int> {
+            require(n in 1..4) { "roundNumber must be 1..4, was $n" }
+            return when (n) {
+                1 -> WORDS_WON_R1; 2 -> WORDS_WON_R2
+                3 -> WORDS_WON_R3; else -> WORDS_WON_R4
+            }
         }
     }
 

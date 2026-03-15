@@ -139,24 +139,22 @@ class GameViewModelTest {
 
     @Test
     fun `wrong guess adds to guesses list`() = runTest {
-        val vm = createViewModel()
-        advanceUntilIdle()
-
         // Use a 5-letter word so we can test with CLASSIC round
         fakeWordRepo = FakeWordRepository(fixedWord = "CRANE")
         fakeWordRepo.addValidWord("HOUSE")
-        val vm2 = GameViewModel(fakeWordRepo, fakePrefs, fakeSoundManager)
+        fakeWordRepo.addValidWord("CHASE")
+        val vm = GameViewModel(fakeWordRepo, fakePrefs, fakeSoundManager)
         advanceUntilIdle()
 
-        vm2.startGame(GameRound.CLASSIC)
+        vm.startGame(GameRound.CLASSIC)
         advanceUntilIdle()
 
-        val state = vm2.uiState.value
-        vm2.onInputChange(state.currentInput.copy(text = "CHASE"))
+        val state = vm.uiState.value
+        vm.onInputChange(state.currentInput.copy(text = "CHASE"))
         advanceUntilIdle()
 
         // Should still be playing with one guess recorded
-        vm2.uiState.test {
+        vm.uiState.test {
             val current = awaitItem()
             assertEquals(GameStatus.PLAYING, current.gameStatus)
             assertEquals(1, current.guesses.size)
@@ -183,7 +181,6 @@ class GameViewModelTest {
         assertEquals(LetterState.CORRECT, keys['C'])
         // E is in CRANE but not at position 4 in CHASE → depends on engine
         assertNotNull(keys['E'])
-        cancelAndIgnoreRemainingEvents()
     }
 
     @Test

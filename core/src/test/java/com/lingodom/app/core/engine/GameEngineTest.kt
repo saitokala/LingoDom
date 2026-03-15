@@ -34,16 +34,10 @@ class GameEngineTest {
 
     @Test
     fun `duplicate letters handled correctly - only one yellow for one remaining`() {
-        // Target: APPLE (has two P's)
-        // Guess:  PPPXX
-        // P at 0: not at 0 in target (A), but P is at 1 → WRONG_POSITION, consume P@1
-        // P at 1: not at 1 in target (P is at 1!) → CORRECT, consumed in pass 1
-        // P at 2: P at 2 in target is P → CORRECT, consumed in pass 1
-        // Actually let me rethink...
         // Target: APPLE -> A(0) P(1) P(2) L(3) E(4)
         // Guess:  PPPXX -> P(0) P(1) P(2) X(3) X(4)
-        // Pass 1: i=1 P==P → CORRECT, used[1]=true; i=2 P==P → CORRECT, used[2]=true
-        // Pass 2: i=0 P not correct, check j: j=0 A!=P, j=1 used, j=2 used → ABSENT
+        // Pass 1: i=1 P==P → CORRECT; i=2 P==P → CORRECT
+        // Pass 2: i=0 P — both target P's used → ABSENT
         val result = GameEngine.evaluateGuess("PPPXX", "APPLE")
         assertEquals(LetterState.ABSENT, result[0].state)   // P - no more P's available
         assertEquals(LetterState.CORRECT, result[1].state)   // P - exact match
@@ -60,17 +54,9 @@ class GameEngineTest {
 
     @Test
     fun `mixed correct wrong_position and absent`() {
-        // Target: CRANE
-        // Guess:  CHART
-        // C at 0: C==C → CORRECT
-        // H at 1: R!=H, check all: no H in CRANE → ABSENT
-        // A at 2: A!=A? target[2]=A → CORRECT
-        // Wait: CRANE = C(0) R(1) A(2) N(3) E(4)
+        // CRANE = C(0) R(1) A(2) N(3) E(4)
         // CHART = C(0) H(1) A(2) R(3) T(4)
-        // Pass 1: i=0 C==C CORRECT; i=2 A==A CORRECT
-        // Pass 2: i=1 H: no H in CRANE → ABSENT
-        //         i=3 R: j=1 R not used → WRONG_POSITION
-        //         i=4 T: no T → ABSENT
+        // C→CORRECT, H→ABSENT, A→CORRECT, R→WRONG_POSITION, T→ABSENT
         val result = GameEngine.evaluateGuess("CHART", "CRANE")
         assertEquals(LetterState.CORRECT, result[0].state)        // C
         assertEquals(LetterState.ABSENT, result[1].state)          // H

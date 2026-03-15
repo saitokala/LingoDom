@@ -5,6 +5,8 @@ import android.media.AudioManager
 import android.media.ToneGenerator
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,6 +16,9 @@ import javax.inject.Singleton
  * - Key clicks use a lightweight ToneGenerator (DTMF tone).
  * - Win / loss effects use a ToneGenerator sequence on a background thread
  *   to produce a musical jingle without shipping audio files.
+ *
+ * All sound work is dispatched to a single-thread executor to prevent
+ * unbounded thread creation from rapid taps.
  */
 @Singleton
 class SoundManagerImpl @Inject constructor(
@@ -22,6 +27,10 @@ class SoundManagerImpl @Inject constructor(
 
     companion object {
         private const val TAG = "SoundManagerImpl"
+    }
+
+    private val executor: ExecutorService = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "SoundManager").apply { isDaemon = true }
     }
 
     override fun playSound(effectType: Int) {
@@ -35,26 +44,24 @@ class SoundManagerImpl @Inject constructor(
     // ── Key tap ─────────────────────────────────────────────────────
 
     private fun playTapTone() {
-        var generator: ToneGenerator? = null
-        try {
-            generator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
-            generator.startTone(ToneGenerator.TONE_DTMF_S, 50)
-            val gen = generator
-            generator = null
-            Thread {
-                try { Thread.sleep(150) } catch (_: InterruptedException) { }
-                try { gen.release() } catch (_: Exception) { }
-            }.start()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to play tap tone", e)
-            try { generator?.release() } catch (_: Exception) { }
+        executor.execute {
+            var generator: ToneGenerator? = null
+            try {
+                generator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+                generator.startTone(ToneGenerator.TONE_DTMF_S, 50)
+                Thread.sleep(150)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to play tap tone", e)
+            } finally {
+                try { generator?.release() } catch (_: Exception) { }
+            }
         }
     }
 
     // ── Victory jingle (rising C-E-G triad, ~600 ms total) ──────────
 
     private fun playVictoryJingle() {
-        Thread {
+        executor.execute {
             var gen: ToneGenerator? = null
             try {
                 gen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
@@ -69,13 +76,13 @@ class SoundManagerImpl @Inject constructor(
             } finally {
                 try { gen?.release() } catch (_: Exception) { }
             }
-        }.start()
+        }
     }
 
     // ── Failure tone (descending 2-note) ────────────────────────────
 
     private fun playFailureTone() {
-        Thread {
+        executor.execute {
             var gen: ToneGenerator? = null
             try {
                 gen = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
@@ -88,6 +95,6 @@ class SoundManagerImpl @Inject constructor(
             } finally {
                 try { gen?.release() } catch (_: Exception) { }
             }
-        }.start()
+        }
     }
 }
